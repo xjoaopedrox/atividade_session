@@ -15,7 +15,7 @@ $nome = "";
 $descricao = "";
 $data = "";
 $msgErro = "";
-$alterando = false;
+$alterando = true;
 
 if (isset($_POST['nome'])) {
 
@@ -45,9 +45,9 @@ if (isset($_POST['nome'])) {
         );
 
         $blackBoxCont = new BlackBoxController();
-        
 
-        $erros = $blackBoxCont->inserir($blackBox);
+
+        $erros = $blackBoxCont->alterar($blackBox);
     }
 
     if (empty($erros)) {
@@ -56,6 +56,16 @@ if (isset($_POST['nome'])) {
     }
 
     $msgErro = implode("<br>", $erros);
+} else {
+    if (isset($_SESSION['blackbox'])) {
+        $blackBoxAtual = $_SESSION['blackbox'];
+
+        $nome = $blackBoxAtual->getNome();
+        $descricao = $blackBoxAtual->getDescricao();
+        $data = $blackBoxAtual->getData()->format('Y-m-d\TH:i');
+    } else {
+        $msgErro = "Sessão não existe!";
+    }
 }
 
 require_once(__DIR__ . "/form.php");
