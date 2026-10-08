@@ -1,38 +1,60 @@
 <?php
 
+$tituloPagina = $alterando ? "MODIFY" : "INSERT DATA";
+$subtitulo    = $alterando ? "Amend record information" : "Record information";
+$codigoOp     = $alterando ? "03" : "01";
+require_once(__DIR__ . "/partials/header.php");
 ?>
 
-<h3>INSERT DATA</h3>
+<section class="panel <?= $alterando ? 'panel-modify' : 'panel-insert' ?>">
 
-<form action="" method="POST">
+    <div class="panel-head">
+        <span>Data record</span>
+        <span><?= $codigoOp ?> · <?= $tituloPagina ?></span>
+    </div>
 
-    <label for="nome">nome:</label>
-    <input
-        type="text"
-        id="nome"
-        name="nome"
-    >
+    <h2 class="panel-title"><?= $subtitulo ?></h2>
 
-    <br><br>
+    <?php if ($msgErro !== ""): ?>
+        <div class="alert" role="alert"><?= $msgErro ?></div>
+    <?php endif; ?>
 
-    <label for="descricao">descricao:</label>
-    <input
-        type="text"
-        id="descricao"
-        name="descricao"
-    >
+    <form action="" method="POST">
 
-    <br><br>
+        <div class="field">
+            <label for="nome">Name</label>
+            <input
+                type="text"
+                id="nome"
+                name="nome"
+                value="<?= htmlspecialchars($nome) ?>"
+            >
+            <span class="hint">Nome do registro</span>
+        </div>
 
-    <label for="data">data:</label>
-    <input
-        type="date"
-        id="data"
-        name="data"
-    >
+        <div class="field">
+            <label for="descricao">Description</label>
+            <textarea
+                id="descricao"
+                name="descricao"
+            ><?= htmlspecialchars($descricao) ?></textarea>
+            <span class="hint">Descrição do registro</span>
+        </div>
 
-    <br><br>
+        <div class="field">
+            <label for="data">Timestamp</label>
+            <input
+                type="datetime-local"
+                id="data"
+                name="data"
+                value="<?= htmlspecialchars($data) ?>"
+            >
+            <span class="hint">Data e hora do registro</span>
+        </div>
 
-    <button type="submit">Gravar</button>
+        <button type="submit" class="btn">Gravar</button>
 
-</form>
+    </form>
+</section>
+
+<?php require_once(__DIR__ . "/partials/footer.php"); ?>

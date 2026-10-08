@@ -1,0 +1,577 @@
+/* ============================================================
+   BLACK BOX - FLIGHT DATA RECORDER
+   Software de consulta e manutenção de dados de um gravador.
+   Visual técnico e sóbrio. CSS puro, sem bibliotecas externas.
+   ============================================================ */
+
+:root {
+    /* base neutra (grafite) */
+    --bg: #17191c;
+    --panel: #202327;
+    --panel-2: #282c31;
+    --line: #3a3f45;
+    --text: #e6e8ea;
+    --muted: #9aa1a9;
+
+    /* etiqueta do equipamento */
+    --plate-bg: #cfd2d5;
+    --plate-text: #1a1c1f;
+    --plate-muted: #4b5158;
+
+    /* cores funcionais das operações (sóbrias) */
+    --insert: #6f9bc2;   /* 01 INSERT DATA */
+    --read:   #7fae94;   /* 02 READ        */
+    --modify: #c9a85c;   /* 03 MODIFY      */
+    --purge:  #c46d6d;   /* 04 PURGE       */
+
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --radius: 4px;
+}
+
+* { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.container {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+}
+
+code { font-family: var(--mono); }
+
+/* ---------- Texto base ---------- */
+.label,
+.eyebrow {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.label { margin-bottom: 3px; }
+
+.value {
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mono { font-family: var(--mono); }
+
+.is-active { color: var(--read); }
+.is-empty  { color: var(--muted); }
+
+/* indicador de estado (luz do equipamento) */
+.dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    vertical-align: baseline;
+}
+
+.dot-on {
+    background: var(--read);
+    border-color: var(--read);
+}
+
+/* ---------- Unidade (corpo do equipamento) ---------- */
+.unit {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+/* ---------- Placa de identificação ---------- */
+.plate {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    padding: 16px 34px;
+    background: var(--plate-bg);
+    color: var(--plate-text);
+    outline: 1px solid rgba(0, 0, 0, 0.28);   /* moldura gravada */
+    outline-offset: -6px;
+}
+
+/* parafusos de fixação (estáticos) */
+.plate::before,
+.plate::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    margin-top: -4px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.plate::before { left: 12px; }
+.plate::after  { right: 12px; }
+
+.plate-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1.15;
+}
+
+.plate-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: 3px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--plate-muted);
+}
+
+.plate-tag {
+    padding: 1px 6px;
+    border: 1px solid var(--plate-muted);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+}
+
+.plate-meta {
+    display: flex;
+    gap: 28px;
+    margin: 0;
+}
+
+.plate-meta dt {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--plate-muted);
+}
+
+.plate-meta dd {
+    margin: 1px 0 0;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+}
+
+/* ---------- Estado do equipamento ---------- */
+.status-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+}
+
+.status-cell {
+    background: var(--panel);
+    padding: 11px 16px;
+    min-width: 0;
+}
+
+/* RECORDER STATUS: indicador embutido */
+.status-primary {
+    background: var(--bg);
+}
+
+.status-primary .value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.status-primary .dot {
+    width: 12px;
+    height: 12px;
+    margin-right: 14px;
+    margin-left: 3px;
+    outline: 2px solid var(--line);   /* aro da lâmpada */
+    outline-offset: 3px;
+}
+
+/* ---------- Operações: RECORD / REVIEW / AMEND / ERASE ---------- */
+.ops-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--panel-2);
+    border-top: 1px solid var(--line);
+}
+
+.ops-head .label { margin: 0; }
+
+.ops-seq {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+}
+
+.nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+}
+
+.nav-item {
+    --accent: var(--muted);
+    position: relative;
+    display: block;
+    padding: 12px 14px;
+    background: var(--panel);
+    border-top: 3px solid var(--accent);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-item:hover,
+.nav-item:focus-visible {
+    background: var(--panel-2);
+    outline: none;
+}
+
+.nav-item.is-current { background: var(--panel-2); }
+
+.nav-code {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+
+.nav-title {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.nav-desc {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.nav-desc strong {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.nav-insert { --accent: var(--insert); }
+.nav-read   { --accent: var(--read); }
+.nav-modify { --accent: var(--modify); }
+.nav-purge  { --accent: var(--purge); }
+
+/* ---------- Painéis (módulo DATA RECORD) ---------- */
+.panel {
+    --accent: var(--read);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 0 24px 24px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.panel-insert { --accent: var(--insert); }
+.panel-read   { --accent: var(--read); }
+.panel-modify { --accent: var(--modify); }
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 0 -24px 20px;
+    padding: 10px 24px;
+    background: var(--panel-2);
+    border-bottom: 3px double var(--line);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+/* identificação do módulo */
+.panel-head > span:first-child {
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.panel-head > span:first-child::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 9px;
+    background: var(--accent);
+}
+
+.panel-title {
+    margin: 0 0 20px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+/* ---------- Ficha técnica (READ) ---------- */
+.datasheet {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.datasheet .row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    border-top: 1px solid var(--line);
+}
+
+.datasheet .row:first-child { border-top: 0; }
+
+.datasheet dt {
+    padding: 12px 16px;
+    background: var(--panel-2);
+    border-right: 1px solid var(--line);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.datasheet dd {
+    margin: 0;
+    padding: 12px 16px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;   /* mantém quebras de linha da descrição */
+}
+
+.datasheet dd.big {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* TIMESTAMP: campos de leitura DATE / TIME */
+.datasheet dd.timestamp {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    white-space: normal;
+}
+
+.ts-part {
+    padding: 6px 14px 7px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+}
+
+.ts-label {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+}
+
+.ts-value {
+    display: block;
+    font-family: var(--mono);
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+}
+
+/* ---------- Linha de log ---------- */
+.logline { margin-top: 18px; }
+
+.log-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    padding: 9px 14px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.log-time  { color: var(--muted); }
+.log-event { color: var(--accent); font-weight: 700; letter-spacing: 0.04em; }
+
+.log-entry.is-empty {
+    border-left-color: var(--line);
+    color: var(--muted);
+}
+
+/* ---------- Estado vazio ---------- */
+.empty-body { padding: 12px 0 4px; }
+
+.empty-state {
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.empty-message {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+/* ---------- Diagnóstico ---------- */
+.diagnostics {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 18px 16px;
+}
+
+.diagnostics .eyebrow { margin-bottom: 12px; }
+
+.diag-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.diag-grid .value { font-size: 0.88rem; }
+
+/* ---------- Formulário ---------- */
+.field { margin-bottom: 18px; }
+
+.field label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.field .hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.field input,
+.field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font: inherit;
+}
+
+.field textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+    outline: 1px solid var(--accent);
+    border-color: var(--accent);
+}
+
+.btn {
+    display: inline-block;
+    padding: 11px 26px;
+    background: var(--accent);
+    color: #14161a;
+    border: 0;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.btn:hover { filter: brightness(1.08); }
+
+.alert {
+    margin-bottom: 20px;
+    padding: 11px 14px;
+    background: rgba(196, 109, 109, 0.12);
+    border: 1px solid var(--purge);
+    border-radius: var(--radius);
+    color: #efc4c4;
+    font-size: 0.95rem;
+}
+
+/* ---------- Rodapé ---------- */
+.footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+/* ---------- Responsividade ---------- */
+@media (max-width: 720px) {
+    .nav { grid-template-columns: repeat(2, 1fr); }
+    .diag-grid { grid-template-columns: repeat(2, 1fr); }
+    .status-strip { grid-template-columns: 1fr; }
+    .ops-seq { display: none; }
+    .datasheet .row { grid-template-columns: 1fr; }
+    .datasheet dt { border-right: 0; padding-bottom: 6px; }
+    .datasheet dd { padding-top: 8px; }
+    .panel { padding: 0 18px 20px; }
+    .panel-head { margin: 0 -18px 18px; padding: 10px 18px; }
+    .plate { padding: 16px 30px; }
+    .plate-meta { gap: 20px; }
+}
+
+@media (max-width: 380px) {
+    .nav { grid-template-columns: 1fr; }
+}
